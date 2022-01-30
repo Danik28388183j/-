@@ -1,0 +1,119 @@
+<!doctype html>
+
+<html lang="en" manifest="offline.appcache">
+
+<head>
+  <meta charset="utf-8">
+
+  <title>Pressure Scale</title>
+  <meta name="viewport" content="initial-scale=1.0001, minimum-scale=1.0001, maximum-scale=1.0001, user-scalable=no">
+  <meta name="description" content="Weigh small objects using your 3D touch enabled iPhone!">
+  <meta name="author" content="Tarun Pemmaraju">
+  <link rel="apple-touch-icon-precomposed" sizes="512x512" href="icon.png" />
+  <!-- icon from http://www.flaticon.com/free-icon/food-scale-tool_45327 -->
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      -webkit-user-select: none;
+      font-family: -apple-system;
+    }
+    
+    #forcearea {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #e3e3e3;
+      padding-top: 200px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    #buttonarea {
+      position: fixed;
+      top: 280;
+      left: 0;
+      right: 0;
+      background-color: #e3e3e3;
+      text-align: center;
+      font-size:24px;
+      z-index: 1;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="forcearea">
+    <p id = 'forceAmount'>0 grams</p>
+    <div id="buttonarea">
+      <button id="tareButton">Tare</button>
+    </div>
+  </div>
+  
+  <script>
+    // based on https://github.com/freinbichler/3d-touch
+    var touchElement = document.getElementById('forcearea');
+    var forceTextElement = document.getElementById('forceAmount');
+
+    var ForceValue = 0;
+    var TareValue = 0;
+
+    function onTouchStartMove(e) {
+      e.preventDefault();
+      checkForce(e);
+    }
+
+    function onTouchEnd(e) {
+      e.preventDefault();
+      touch = null;
+    }
+
+    function checkForce(e) {
+      if(e.target.id == "buttonarea" || e.target.id == "tareButton")
+      {
+        TareValue = Math.round(ForceValue * 385) ;
+      }
+      else
+      {
+        touch = e.touches[0];
+        setTimeout(refreshForceValue.bind(touch), 10);
+      }
+    }
+
+    function checkMacForce(e) {
+      // max value for trackpad is 3.0 compare to 1.0 on iOS
+      refreshMacForceValue(e.webkitForce / 3);
+    }
+
+    function refreshMacForceValue(forceValue) {
+      forceTextElement.innerHTML = Math.round(forceValue * 1000) + " <br><sup style=\"color:red\">Uncalibrated for Mac</sup>";
+    }
+
+    function refreshForceValue() {
+      var touchEvent = this;
+      
+      ForceValue = 0;
+
+      if (touchEvent) {
+        ForceValue = touchEvent.force || 0;
+        setTimeout(refreshForceValue.bind(touch), 10);
+      }
+
+      //Remove the TareValue from the returned value
+      forceTextElement.innerHTML = Math.round((ForceValue * 385) - TareValue) + " grams";
+    }
+
+    (function() {
+      touchElement.addEventListener('touchstart', onTouchStartMove, false);
+      touchElement.addEventListener('touchmove', onTouchStartMove, false);
+      touchElement.addEventListener('touchend', onTouchEnd, false);
+      touchElement.addEventListener('webkitmouseforcewillbegin', checkMacForce, false);
+      touchElement.addEventListener('webkitmouseforcechanged', checkMacForce, false);
+    })();
+  </script>
+</body>
+
+</html>
